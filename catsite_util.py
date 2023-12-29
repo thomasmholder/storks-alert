@@ -166,8 +166,8 @@ class catsite_util(commands.Cog):
 
 #-----------------------------------------
 
-def setup(bot):
-    bot.add_cog(catsite_util(bot))
+async def setup(bot):
+    await bot.add_cog(catsite_util(bot))
 
 #-----------------------------------------
 

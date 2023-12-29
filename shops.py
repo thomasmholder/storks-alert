@@ -461,8 +461,8 @@ class shops(commands.Cog):
 
 #-----------------------------------------
 
-def setup(bot):
-    bot.add_cog(shops(bot))
+async def setup(bot):
+    await bot.add_cog(shops(bot))
 
 #-----------------------------------------
 

@@ -10,9 +10,9 @@ handler = logging.FileHandler(filename='discord.log', encoding='utf-8', mode='w'
 handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
 logger.addHandler(handler)
 
-prefix = ('/')
+prefix = ('!')
 
-intents = discord.Intents(guilds=True, messages=True, members=True)
+intents = discord.Intents.all()
 bot = commands.Bot(command_prefix=prefix, intents=intents)
 
 mods = ['shops', 'items', 'cats', 'catsite_util', 'shortcuts'] # modules
@@ -45,9 +45,9 @@ async def kill(ctx):
 async def reloadall(ctx, *, params=""):
     out = []
     for extension_name in initial_extensions:
-        bot.unload_extension(extension_name)
+        await bot.unload_extension(extension_name)
         try:
-            bot.load_extension(extension_name)
+            await bot.load_extension(extension_name)
         except (AttributeError, ImportError) as e:
             await ctx.send("```py\n{}: {}\n```".format(type(e).__name__, str(e)))
         out.append("**{}** loaded.".format(extension_name))
@@ -56,7 +56,7 @@ async def reloadall(ctx, *, params=""):
 @bot.command()
 async def load(ctx, extension_name : str):
     try:
-        bot.load_extension(extension_name)
+        await bot.load_extension(extension_name)
     except (AttributeError, ImportError) as e:
         await ctx.send("```py\n{}: {}\n```".format(type(e).__name__, str(e)))
         return
@@ -64,14 +64,14 @@ async def load(ctx, extension_name : str):
 
 @bot.command()
 async def unload(ctx, extension_name : str):
-    bot.unload_extension(extension_name)
+    await bot.unload_extension(extension_name)
     await ctx.send("**{}** unloaded.".format(extension_name))
 
 @bot.command()
 async def reload(ctx, extension_name : str):
-    bot.unload_extension(extension_name)
+    await bot.unload_extension(extension_name)
     try:
-        bot.load_extension(extension_name)
+        await bot.load_extension(extension_name)
     except (AttributeError, ImportError) as e:
         await ctx.send("```py\n{}: {}\n```".format(type(e).__name__, str(e)))
         return
@@ -87,6 +87,7 @@ if __name__ == "__main__":
     for extension in initial_extensions:
         try:
             bot.load_extension(extension)
+            logger.info(f"Loaded {extension}")
         except Exception as e:
             exc = '{}: {}'.format(type(e).__name__, e)
             logger.warning('Failed to load extension {}\n{}'.format(extension, exc))

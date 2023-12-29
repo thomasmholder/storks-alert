@@ -15,7 +15,7 @@ prefix = '!'
 intents = discord.Intents.all()
 bot = commands.Bot(command_prefix=prefix, intents=intents)
 
-mods = ['Shops', 'Items', 'Cats', 'CatSiteUtil', 'Shortcuts']  # modules
+mods = ['shops', 'items', 'cats', 'catsiteutil', 'shortcuts']  # modules
 initial_extensions = mods
 
 bot.remove_command("help")

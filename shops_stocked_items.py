@@ -347,7 +347,7 @@ for STOCKED in [WHISKERS_STOCKED]:
 # WHISKERS_STOCKED and BLACK_MARKET_STOCKED 
 
 for STOCKED in [BLACK_MARKET_STOCKED]:
-    for k, v in STOCKED.Items():
+    for k, v in STOCKED.items():
         STOCKED[k] = [item.lower() for item in STOCKED[k]]
         ALL_ITEMS_STOCKED.extend(STOCKED[k])
         for item in STOCKED[k]:

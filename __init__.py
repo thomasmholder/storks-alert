@@ -10,39 +10,41 @@ handler = logging.FileHandler(filename='discord.log', encoding='utf-8', mode='w'
 handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
 logger.addHandler(handler)
 
-prefix = ('!')
+prefix = '!'
 
 intents = discord.Intents.all()
 bot = commands.Bot(command_prefix=prefix, intents=intents)
 
-mods = ['shops', 'items', 'cats', 'catsite_util', 'shortcuts'] # modules
+mods = ['Shops', 'Items', 'Cats', 'CatSiteUtil', 'Shortcuts']  # modules
 initial_extensions = mods
 
 bot.remove_command("help")
 
 with open('settings.json', 'r') as f:
     content = json.load(f)
-    embedcolor = int(content['color'][2:], base=16)
+    embed_color = int(content['color'][2:], base=16)
     admin_ids = [int(discid) for discid in content['permissions']['admins']]
 
-@bot.event  
+
+@bot.event
 async def on_ready():
     logger.info(f'Logged in as {bot.user.name}; ID {bot.user.id}')
 
-#-----------------------------------------
 
 @bot.command()
 async def kill(ctx):
-    if ctx.message.author.id not in admin_ids: 
-        logger.debug(f'Attempted kill by {ctx.message.author.name} ({ctx.message.author.id}) with insufficient permissions')
+    if ctx.message.author.id not in admin_ids:
+        logger.debug(
+            f'Attempted kill by {ctx.message.author.name} ({ctx.message.author.id}) with insufficient permissions')
         return
-    embed = discord.Embed(description='Goodnight! Restarting soon.', colour = discord.Colour(embedcolor))
-    await ctx.send(embed = embed)
+    embed = discord.Embed(description='Goodnight! Restarting soon.', colour=discord.Colour(embed_color))
+    await ctx.send(embed=embed)
     await bot.logout()
     sys.exit()
 
-@bot.command()
-async def reloadall(ctx, *, params=""):
+
+@bot.command(name="reloadall")
+async def reload_all(ctx, *, _=""):
     out = []
     for extension_name in initial_extensions:
         await bot.unload_extension(extension_name)
@@ -53,8 +55,9 @@ async def reloadall(ctx, *, params=""):
         out.append("**{}** loaded.".format(extension_name))
     await ctx.send('\n'.join(out))
 
+
 @bot.command()
-async def load(ctx, extension_name : str):
+async def load(ctx, extension_name: str):
     try:
         await bot.load_extension(extension_name)
     except (AttributeError, ImportError) as e:
@@ -62,13 +65,15 @@ async def load(ctx, extension_name : str):
         return
     await ctx.send("**{}** loaded.".format(extension_name))
 
+
 @bot.command()
-async def unload(ctx, extension_name : str):
+async def unload(ctx, extension_name: str):
     await bot.unload_extension(extension_name)
     await ctx.send("**{}** unloaded.".format(extension_name))
 
+
 @bot.command()
-async def reload(ctx, extension_name : str):
+async def reload(ctx, extension_name: str):
     await bot.unload_extension(extension_name)
     try:
         await bot.load_extension(extension_name)
@@ -77,13 +82,13 @@ async def reload(ctx, extension_name : str):
         return
     await ctx.send("**{}** reloaded.".format(extension_name))
 
+
 @bot.command()
 async def color(ctx):
-    await ctx.send('#'+hex(embedcolor)[2:])
+    await ctx.send('#' + hex(embed_color)[2:])
 
-#-----------------------------------------
 
-if __name__ == "__main__":
+def load_initial_extensions():
     for extension in initial_extensions:
         try:
             bot.load_extension(extension)
@@ -91,6 +96,10 @@ if __name__ == "__main__":
         except Exception as e:
             exc = '{}: {}'.format(type(e).__name__, e)
             logger.warning('Failed to load extension {}\n{}'.format(extension, exc))
+
+
+if __name__ == "__main__":
+    load_initial_extensions()
 
     with open('token.txt', 'r') as f:
         token = f.read()

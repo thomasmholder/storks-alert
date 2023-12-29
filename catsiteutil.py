@@ -1,9 +1,8 @@
 import json
 import logging
-import sqlite3
 from discord.ext import commands
 from datetime import datetime, timedelta
-from datetime import date as dtdate
+from datetime import date as datetime_date
 from zoneinfo import ZoneInfo
 
 logger = logging.getLogger('discord')
@@ -12,31 +11,32 @@ handler = logging.FileHandler(filename='discord.log', encoding='utf-8', mode='w'
 handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
 logger.addHandler(handler)
 
-SEASONS = { 0: 'Spring', 1: 'Summer', 2: 'Autumn', 3: 'Winter' }
+SEASONS = {0: 'Spring', 1: 'Summer', 2: 'Autumn', 3: 'Winter'}
 SEASONS_EMOTES = ['🌸', '🌴', '🍂', '❄️']
 SEASONS_INV = {v: k for k, v in SEASONS.items()}
-SEASONS_INV.update({ 
-    'Spr': 0, 
-    'Sum': 1, 
-    'Aut': 2, 
+SEASONS_INV.update({
+    'Spr': 0,
+    'Sum': 1,
+    'Aut': 2,
     'Win': 3,
-    'Sp': 0, 
-    'Su': 1, 
-    'Au': 2, 
+    'Sp': 0,
+    'Su': 1,
+    'Au': 2,
     'Wi': 3,
     'Fall': 2,
     'Fa': 2,
 })
-CAT_DAYS_PER_SEASON = 49 
+CAT_DAYS_PER_SEASON = 49
 CAT_DAYS_PER_YEAR = 4 * CAT_DAYS_PER_SEASON
-CAT_ORIGIN_DATE = dtdate(2019, 9, 1)
+CAT_ORIGIN_DATE = datetime_date(2019, 9, 1)
 CAT_LIFE_STAGES = [
-    ('Birth', 0), 
-    ('Young Kitten', 28), 
-    ('Kitten', 56), 
-    ('Adolescent', 84), 
-    ('Adult', 112), 
+    ('Birth', 0),
+    ('Young Kitten', 28),
+    ('Kitten', 56),
+    ('Adolescent', 84),
+    ('Adult', 112),
 ]
+
 
 class CatDate:
     def __init__(self, days_since_origin):
@@ -47,9 +47,9 @@ class CatDate:
     def convert_to_catdate(self):
         year = self.days_since_origin // CAT_DAYS_PER_YEAR
         day_in_year = self.days_since_origin - year * CAT_DAYS_PER_YEAR
-        season = day_in_year // 49  
+        season = day_in_year // 49
         day_in_season = day_in_year - season * CAT_DAYS_PER_SEASON
-        return season, day_in_season+1, year+1
+        return season, day_in_season + 1, year + 1
 
     def convert_from_catdate(self):
         return CAT_ORIGIN_DATE + timedelta(days=self.days_since_origin)
@@ -82,7 +82,34 @@ class CatDate:
     def date_str(self):
         return self.real_date.strftime('%b %d, %Y')
 
-class catsite_util(commands.Cog):
+
+def parse_catdate(catdate_str):
+    try:
+        season, day, year = catdate_str.lower().replace(', year', '').replace(',', '').split(' ')
+        season = SEASONS_INV[season.title()]
+        day = int(day)
+        year = int(year)
+    except:
+        return None
+
+    days_since_origin = (year - 1) * CAT_DAYS_PER_YEAR + season * CAT_DAYS_PER_SEASON + (day - 1)
+    return CatDate(days_since_origin)
+
+
+def get_catdate_info(catdate):
+    prev_week = catdate.sub(7)
+    next_week = catdate.add(7)
+
+    days_since = (today_est() - catdate.real_date).days
+    if days_since < 0:
+        out = f'{catdate} is in **{-days_since}** days.\n'
+    else:
+        out = f'{catdate} was **{days_since}** days ago.\n'
+    out += f'**7 days ago:** {prev_week} \n**7 days later:** {next_week}'
+    return out
+
+
+class CatSiteUtil(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         with open('settings.json', 'r') as f:
@@ -90,30 +117,28 @@ class catsite_util(commands.Cog):
             self.color = int(content['color'][2:], base=16)
             self.admin_ids = [int(discid) for discid in content['permissions']['admins']]
 
-    #-----------------------------------------
-
     @commands.command()
     async def date(self, ctx, *, input_date=''):
         try:
             if not input_date:
                 d = today_est()
             else:
-                d = dtdate.fromisoformat(input_date)
-        except:
+                d = datetime_date.fromisoformat(input_date)
+        except ValueError:
             await ctx.send('Invalid format - expected YYYY-MM-DD, eg. `2021-08-02`.')
             return
 
         days_since_origin = (d - CAT_ORIGIN_DATE).days
-        await ctx.send(self.get_catdate_info(CatDate(days_since_origin)))
+        await ctx.send(get_catdate_info(CatDate(days_since_origin)))
 
     @commands.command()
     async def catdate(self, ctx, *, input_date=''):
-        parsed = self.parse_catdate(input_date)
+        parsed = parse_catdate(input_date)
         if parsed is None:
             await ctx.send('Invalid format - expected `Autumn 24, 4` or `Autumn 24, Year 4`.')
             return
 
-        await ctx.send(self.get_catdate_info(parsed))
+        await ctx.send(get_catdate_info(parsed))
 
     @commands.command()
     async def age(self, ctx, days_of_age: int):
@@ -123,38 +148,14 @@ class catsite_util(commands.Cog):
 
     @commands.command(aliases=['bday'])
     async def birthday(self, ctx, *, input_date):
-        parsed = self.parse_catdate(input_date)
+        parsed = parse_catdate(input_date)
         if parsed is None:
             await ctx.send('Invalid format - expected `Autumn 24, 4` or `Autumn 24, Year 4`.')
             return
 
         await ctx.send(parsed.cat_birth())
 
-    def parse_catdate(self, catdate_str):
-        try:
-            season, day, year = catdate_str.lower().replace(', year', '').replace(',', '').split(' ')
-            season = SEASONS_INV[season.title()]
-            day = int(day)
-            year = int(year)
-        except:
-            return None
-
-        days_since_origin = (year - 1) * CAT_DAYS_PER_YEAR + season * CAT_DAYS_PER_SEASON + (day - 1)
-        return CatDate(days_since_origin)
-
-    def get_catdate_info(self, catdate):
-        prev_week = catdate.sub(7)
-        next_week = catdate.add(7)
-
-        days_since = (today_est() - catdate.real_date).days
-        if days_since < 0:
-            out = f'{catdate} is in **{-days_since}** days.\n'
-        else:
-            out = f'{catdate} was **{days_since}** days ago.\n'
-        out += f'**7 days ago:** {prev_week} \n**7 days later:** {next_week}'
-        return out
-
-    #-----------------------------------------
+    # -----------------------------------------
 
     @commands.command()
     async def source(self, ctx, *, contents):
@@ -164,12 +165,14 @@ class catsite_util(commands.Cog):
     async def user(self, ctx, *, contents):
         await ctx.send(f'<https://www.pixelcatsend.com/profile&username={contents}>')
 
-#-----------------------------------------
+
+# -----------------------------------------
 
 async def setup(bot):
-    await bot.add_cog(catsite_util(bot))
+    await bot.add_cog(CatSiteUtil(bot))
 
-#-----------------------------------------
+
+# -----------------------------------------
 
 def today_est():
     return datetime.now(ZoneInfo('US/Eastern')).date()

@@ -1,4 +1,4 @@
-def filter(line_item):
+def filter_items(line_item):
     if line_item.strip() == '':
         return False
 
@@ -18,9 +18,10 @@ def filter(line_item):
 
     return True
 
+
 with open('raw_items_list.txt', 'r') as f:
     contents = f.read().split('\n')
-    contents = [f'"{x}"' for x in contents if filter(x)]
-    
+    contents = [f'"{x}"' for x in contents if filter_items(x)]
+
     with open('raw_items_list_out.txt', 'w') as ff:
         ff.write(', '.join(contents))

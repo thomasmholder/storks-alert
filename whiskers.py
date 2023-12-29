@@ -54,7 +54,7 @@ for k, v in STOCKED.items():
     for item in STOCKED[k]:
         ITEM_TO_TYPE[item] = k
 
-BLANKCHAR = '\u200b' # discord embed fields can't be empty
+BLANK_CHAR = '\u200b'  # discord embed fields can't be empty
 
 class whiskers(commands.Cog):
     def __init__(self, bot):
@@ -135,17 +135,17 @@ class whiskers(commands.Cog):
 
         return self.generate_item_embed([item for item, count in sorted(items_to_count.items())]), ping_msgs
 
-    def generate_item_embed(self, items):
-        # input: sorted list of lowercase items
+    def generate_item_embed(self, Items):
+        # input: sorted list of lowercase Items
         desc = ','.join([i.title() for i in items if ITEM_TO_TYPE[i] == ""])
         if desc:
             desc = '**Uncategorized:** ' + desc
         desc = f'Server last restocked: **{self.str_time_since()}**\n\n' + desc
         embed=Embed(title="🎁 Jump to Whiskers' store", url="https://www.pixelcatsend.com/city/general-store#contentarea", \
             description=desc)
-        embed.add_field(name=COMMON, value='\n'.join([i.title() for i in items if ITEM_TO_TYPE[i] == COMMON]) + BLANKCHAR, inline=True)
-        embed.add_field(name=UNCOMMON, value='\n'.join([i.title() for i in items if ITEM_TO_TYPE[i] == UNCOMMON]) + BLANKCHAR, inline=True)
-        embed.add_field(name=RARE, value='\n'.join([i.title() for i in items if ITEM_TO_TYPE[i] == RARE]) + BLANKCHAR, inline=True)
+        embed.add_field(name=COMMON, value='\n'.join([i.title() for i in items if ITEM_TO_TYPE[i] == COMMON]) + BLANK_CHAR, inline=True)
+        embed.add_field(name=UNCOMMON, value='\n'.join([i.title() for i in items if ITEM_TO_TYPE[i] == UNCOMMON]) + BLANK_CHAR, inline=True)
+        embed.add_field(name=RARE, value='\n'.join([i.title() for i in items if ITEM_TO_TYPE[i] == RARE]) + BLANK_CHAR, inline=True)
         return embed 
 
     @commands.command(aliases=['cleandb', 'clean_db'])
@@ -202,9 +202,9 @@ class whiskers(commands.Cog):
 
         done(conn)
         await ctx.message.delete()
-        out = f'Thank you for stocking **{len(new_items)}** new items, {ctx.message.author.mention}!'
+        out = f'Thank you for stocking **{len(new_items)}** new Items, {ctx.message.author.mention}!'
         if existing_items:
-            out += f'\nAn additional {len(existing_items)} items were previously stocked.'
+            out += f'\nAn additional {len(existing_items)} Items were previously stocked.'
         await ctx.send(out)
 
         if new_items:
@@ -227,7 +227,7 @@ class whiskers(commands.Cog):
     @commands.command(aliases=['req'])
     async def request(self, ctx, *, item_names):
         items_list = parse_items(item_names)
-        logger.info(f'{ctx.message.author.name} requested {len(items_list)} items')
+        logger.info(f'{ctx.message.author.name} requested {len(items_list)} Items')
         
         conn = connect()
         c = conn.cursor()
@@ -258,7 +258,7 @@ class whiskers(commands.Cog):
     @commands.command(aliases=['fill', 'received', 'unlist', 'receive'])
     async def fulfill(self, ctx, *, item_names):
         items_list = parse_items(item_names)
-        logger.info(f'{ctx.message.author.name} fulfilled {len(items_list)} items')
+        logger.info(f'{ctx.message.author.name} fulfilled {len(items_list)} Items')
 
         conn = connect()
         c = conn.cursor()
@@ -302,7 +302,7 @@ class whiskers(commands.Cog):
         await ctx.send(out)
 
     @commands.command()
-    async def wipe(self, ctx, *, items=''):
+    async def wipe(self, ctx, *, Items=''):
         if ctx.message.author.id not in self.admin_ids and \
             ctx.message.author.id not in self.whiskers_admin_ids: 
             logger.info(f'Attempted wipe by {ctx.message.author.name} ({ctx.message.author.id}) with insufficient permissions')
@@ -312,7 +312,7 @@ class whiskers(commands.Cog):
         if items:
             for item in parse_items(items):
                 c.execute("DELETE FROM whiskers_stock WHERE item = ?", (item,))
-            await ctx.send("Wiped items.")  
+            await ctx.send("Wiped Items.")
         else:
             c.execute("DELETE FROM whiskers_stock")
             await ctx.send("Wiped entire stock.")  
@@ -331,7 +331,7 @@ class whiskers(commands.Cog):
         longest = max([len(name) for name, num in top])
         top_str = '\n'.join([f'{name.title():{longest+2}s} {num}' for name, num in top])
 
-        out = f'**{users}** users requesting **{len(counter)}** unique items for a total of **{len(rows)}** requested items'
+        out = f'**{users}** users requesting **{len(counter)}** unique Items for a total of **{len(rows)}** requested Items'
         out += f'\n```{top_str}```'
         await ctx.send(out)
 
@@ -350,7 +350,7 @@ class whiskers(commands.Cog):
 
         all_str = '\n'.join([f'**{k}**: ' + ', '.join(title_sort(v)) for k, v in sorted(inverted.items(), reverse=True)])
 
-        out = f'**{users}** users requesting **{len(counter)}** unique items for a total of **{len(rows)}** requested items \n{all_str}'
+        out = f'**{users}** users requesting **{len(counter)}** unique Items for a total of **{len(rows)}** requested Items \n{all_str}'
         await ctx.send(out)
 
     @commands.command(aliases=['spyreqs', 'spyreq'])

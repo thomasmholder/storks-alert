@@ -1,8 +1,8 @@
 import json
-import discord
 from discord.ext import commands
 
-class shortcuts(commands.Cog):
+
+class Shortcuts(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         with open('settings.json', 'r') as f:
@@ -11,16 +11,12 @@ class shortcuts(commands.Cog):
 
         self.file = 'shortcuts.json'
 
-    #-----------------------------------------
-
     # edit shortcuts
     @commands.group(invoke_without_subcommand=True, aliases=['sc'])
     async def shortcut(self, ctx):
         if ctx.invoked_subcommand is None:
-            cmds = []
-            cmds.append(['/sc add <name> <contents>', 'create a shortcut (name cannot have spaces)'])
-            cmds.append(['/sc remove <name>', 'remove a shortcut'])
-            cmds.append(['/sc list', 'list all shortcuts'])
+            cmds = [['/sc add <name> <contents>', 'create a shortcut (name cannot have spaces)'],
+                    ['/sc remove <name>', 'remove a shortcut'], ['/sc list', 'list all Shortcuts']]
             out = '\n'.join([f"**{cmd[0]}**\n-- {cmd[1]}" for cmd in cmds])
             out = 'Summon a shortcut with any of: /get /grab /show /lookup\n\n' + out
             await ctx.send(out)
@@ -31,7 +27,8 @@ class shortcuts(commands.Cog):
             with open(self.file, 'r') as f:
                 content = json.load(f)
                 if content:
-                    await ctx.send('Summon a shortcut with any of: /get /grab /show /lookup\n**Available shortcuts:**\n' + ', '.join(sorted([x for x in content])))
+                    await ctx.send('Summon a shortcut with any of: /get /grab /show /lookup\n**Available Shortcuts:**\n'
+                                   + ', '.join(sorted([x for x in content])))
             return 
 
         with open(self.file, 'r') as f:
@@ -79,12 +76,8 @@ class shortcuts(commands.Cog):
             if content:
                 await ctx.send(', '.join([x for x in content]))
             else:
-                await ctx.send('There are no shortcuts.')
+                await ctx.send('There are no Shortcuts.')
 
-
-#-----------------------------------------
 
 async def setup(bot):
-    bot.add_cog(shortcuts(bot))
-
-#-----------------------------------------
+    bot.add_cog(Shortcuts(bot))

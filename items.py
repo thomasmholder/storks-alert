@@ -1,9 +1,7 @@
 import json
 import logging
 import sqlite3
-from collections import Counter
 from discord.ext import commands
-from datetime import datetime, timezone, timedelta
 import string
 
 logger = logging.getLogger('discord')
@@ -13,10 +11,13 @@ handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(me
 logger.addHandler(handler)
 
 DATABASE = 'stork.db'
+
+
 # TABLE item_alias (item text, alias text)
 # TABLE item_value (item text, value integer)
 
-class items(commands.Cog):
+
+class Items(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         with open('settings.json', 'r') as f:
@@ -24,12 +25,11 @@ class items(commands.Cog):
             self.color = int(content['color'][2:], base=16)
             self.admin_ids = [int(discid) for discid in content['permissions']['admins']]
 
-    #-----------------------------------------
-
     @commands.command()
     async def value(self, ctx, *, contents):
-        if ctx.message.author.id not in self.admin_ids: 
-            logger.debug(f'Attempted items.value() by {ctx.message.author.name} ({ctx.message.author.id}) with insufficient permissions')
+        if ctx.message.author.id not in self.admin_ids:
+            logger.debug(f'Attempted Items.value() by {ctx.message.author.name} ({ctx.message.author.id}) with '
+                         f'insufficient permissions')
             return
 
         conn = connect()
@@ -86,7 +86,7 @@ class items(commands.Cog):
         appraised_items = {}
         valueless_items = []
         for item in item_list:
-            row = c.execute("SELECT * FROM item_value WHERE item = ?", (item, )).fetchone()
+            row = c.execute("SELECT * FROM item_value WHERE item = ?", (item,)).fetchone()
             if row is None:
                 valueless_items.append(item)
             else:
@@ -95,11 +95,12 @@ class items(commands.Cog):
 
         out = ''
         if appraised_items:
-            out += 'For out of season items, multiply Whiskers price by 3. Some items that can be quicksold are not sold by Whiskers.\n'
+            out += 'For out of season Items, multiply Whiskers price by 3. Some Items that can be quick sold are not ' \
+                   'sold by Whiskers.\n'
             for item, val in appraised_items.items():
-                out += f'**{title(item)}:** {val} quicksale, {val*4} whiskers\n'
+                out += f'**{title(item)}:** {val} quick sale, {val * 4} whiskers\n'
         if valueless_items:
-            out += f':x: Values could not be found for **{len(valueless_items)}** items.'
+            out += f':x: Values could not be found for **{len(valueless_items)}** Items.'
         await ctx.send(out)
 
     @commands.command()
@@ -140,17 +141,19 @@ class items(commands.Cog):
         done(conn)
         await ctx.message.delete()
 
-        out = f'Quicksale value of **{total_notes}** notes for {len(item_quantities)} unique items and {total_items} total items.\n'
+        out = f'Quick sale value of **{total_notes}** notes for {len(item_quantities)} unique Items and {total_items} '\
+              f'total Items.\n'
         if valueless_items:
-            out += f':x: **{len(valueless_items)}** items with no available value: '
+            out += f':x: **{len(valueless_items)}** Items with no available value: '
             out += ', '.join(title_sort(valueless_items))
             out += '\n'
         if total_items:
             out += ':white_check_mark: '
-            out += ', '.join(f'{title(item)} ({qty})' for item, qty in item_quantities.items() if item not in valueless_items)
+            out += ', '.join(
+                f'{title(item)} ({qty})' for item, qty in item_quantities.items() if item not in valueless_items)
         await ctx.send(out)
 
-    #-----------------------------------------
+    # -----------------------------------------
 
     @commands.command(aliases=['listalias', 'aliaslist', 'aliases'])
     async def list_alias(self, ctx):
@@ -173,13 +176,13 @@ class items(commands.Cog):
             aliases = [title(a) for a in aliases]
             out.append(f'**{title(item)}** [ {", ".join(aliases)} ]')
 
-        out_msgs = ['\n'.join(out[i:i+30]) for i in range(0, len(out), 30)] 
+        out_msgs = ['\n'.join(out[i:i + 30]) for i in range(0, len(out), 30)]
         for out_msg in out_msgs:
             await ctx.send(out_msg)
 
     @commands.command(aliases=['alias'])
     async def add_alias(self, ctx, *, msg):
-        if ',' not in msg: 
+        if ',' not in msg:
             return
         item, alias = [x.lower().strip() for x in msg.split(',')]
 
@@ -195,7 +198,7 @@ class items(commands.Cog):
 
     @commands.command(aliases=['dealias', 'unalias'])
     async def remove_alias(self, ctx, *, msg):
-        if ',' not in msg: 
+        if ',' not in msg:
             return
         item, alias = [x.lower().strip() for x in msg.split(',')]
 
@@ -209,25 +212,31 @@ class items(commands.Cog):
             await ctx.send(f':x: `{title(alias)}` was not an alias for `{title(item)}`')
         done(conn)
 
-#-----------------------------------------
+
+# -----------------------------------------
 
 async def setup(bot):
-    await bot.add_cog(items(bot))
+    await bot.add_cog(Items(bot))
 
-#-----------------------------------------
+
+# -----------------------------------------
 
 def title(i):
     return string.capwords(i)
 
-def title_sort(l):
-    return sorted([title(x) for x in l])
+
+def title_sort(line):
+    return sorted([title(x) for x in line])
+
 
 def connect():
     return sqlite3.connect(DATABASE, detect_types=sqlite3.PARSE_DECLTYPES)
 
+
 def done(conn):
     conn.commit()
     conn.close()
+
 
 def is_int(s):
     try:
@@ -235,6 +244,7 @@ def is_int(s):
         return True
     except ValueError:
         return False
+
 
 # these are imported in whiskers.py
 
@@ -246,11 +256,13 @@ def is_item(item):
             return False
     return True
 
+
 def parse_items(item_list, delim=','):
     return set([i.lower().strip() for i in item_list.split(delim) if is_item(i)])
 
+
 def get_item(cursor, name):
-    potential_alias = cursor.execute("SELECT * FROM item_alias WHERE alias = ?", (name, )).fetchone()
-    if potential_alias is None: # no aliases, return original item name
+    potential_alias = cursor.execute("SELECT * FROM item_alias WHERE alias = ?", (name,)).fetchone()
+    if potential_alias is None:  # no aliases, return original item name
         return name
     return potential_alias[0]

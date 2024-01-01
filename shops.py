@@ -16,7 +16,7 @@ handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(me
 logger.addHandler(handler)
 
 DATABASE = 'stork.db'
-# TABLE Shops (discordid text, item text)
+# TABLE shops (discordid text, item text)
 # TABLE shops_stock (item text, time timestamp)
 
 SECS_PER_HR = 60 * 60
@@ -128,7 +128,7 @@ def get_pings(item_list):
     user_pings = set()
 
     for item in item_list:
-        rows = c.execute("SELECT * FROM Shops WHERE item = ?", (item,)).fetchall()
+        rows = c.execute("SELECT * FROM shops WHERE item = ?", (item,)).fetchall()
         items_to_count[item] = len(rows)
         if rows:
             user_pings.update([f'<@{disc_id}>' for disc_id, timestamp in rows])
@@ -145,7 +145,7 @@ async def requests_for_user(ctx, discordid):
     c = conn.cursor()
     items_list = []
     warnings = []
-    for row in c.execute("SELECT * FROM Shops WHERE discordid = ?", (discordid,)):
+    for row in c.execute("SELECT * FROM shops WHERE discordid = ?", (discordid,)):
         items_list.append(row[1])
         if row[1] not in ALL_ITEMS_STOCKED:
             warnings.append(row[1])
@@ -167,9 +167,9 @@ async def fulfill_for_user(ctx, discordid, item_names):
     fails, successes = [], []
     for item in items_list:
         item = get_item(c, item)
-        rows = c.execute("SELECT * FROM Shops WHERE discordid = ? AND item = ?", (discordid, item)).fetchall()
+        rows = c.execute("SELECT * FROM shops WHERE discordid = ? AND item = ?", (discordid, item)).fetchall()
         if len(rows) > 0:
-            c.execute("DELETE FROM Shops WHERE discordid = ? AND item = ?", (discordid, item))
+            c.execute("DELETE FROM shops WHERE discordid = ? AND item = ?", (discordid, item))
             successes.append(item)
         else:
             fails.append(item)
@@ -193,9 +193,9 @@ async def request_for_user(ctx, discordid, item_names):
     dupes, successes, warnings = [], [], []
     for item in items_list:
         item = get_item(c, item)
-        rows = c.execute("SELECT * FROM Shops WHERE discordid = ? AND item = ?", (discordid, item)).fetchall()
+        rows = c.execute("SELECT * FROM shops WHERE discordid = ? AND item = ?", (discordid, item)).fetchall()
         if len(rows) == 0:
-            c.execute(f"INSERT INTO Shops VALUES (?,?)", (discordid, item))
+            c.execute(f"INSERT INTO shops VALUES (?,?)", (discordid, item))
             successes.append(item)
         else:
             dupes.append(item)
@@ -240,7 +240,7 @@ class Shops(commands.Cog):
         conn = connect()
         c = conn.cursor()
 
-        rows = c.execute("SELECT discordid FROM Shops").fetchall()
+        rows = c.execute("SELECT discordid FROM shops").fetchall()
         user_ids = set([int(r[0]) for r in rows])
 
         dead_users = {}
@@ -250,9 +250,9 @@ class Shops(commands.Cog):
                 dead_users[user_id] = []
 
         for dead_user_id in dead_users.keys():
-            for row in c.execute("SELECT item FROM Shops WHERE discordid = ?", (dead_user_id,)):
+            for row in c.execute("SELECT item FROM shops WHERE discordid = ?", (dead_user_id,)):
                 dead_users[dead_user_id].append(row[0])
-            c.execute("DELETE FROM Shops WHERE discordid = ?", (dead_user_id,))
+            c.execute("DELETE FROM shops WHERE discordid = ?", (dead_user_id,))
         done(conn)
 
         logger.info(f'**{len(dead_users)} dead users cleaned from database: ** {str(dead_users)}')
@@ -300,7 +300,7 @@ class Shops(commands.Cog):
                 for embed in embeds:
                     await ctx.send(embed=embed)
 
-    @commands.command(aliases=['w', 'whisk', 'stocked', 'bm', 'Shops'])
+    @commands.command(aliases=['w', 'whisk', 'stocked', 'bm', 'shops'])
     async def all_stocked_items(self, ctx):
         clean_stock()
         conn = connect()
@@ -384,7 +384,7 @@ class Shops(commands.Cog):
     async def stats(self, ctx):
         conn = connect()
         c = conn.cursor()
-        rows = c.execute("SELECT * FROM Shops").fetchall()
+        rows = c.execute("SELECT * FROM shops").fetchall()
         done(conn)
 
         users = len(set([row[0] for row in rows]))
@@ -402,7 +402,7 @@ class Shops(commands.Cog):
     async def requests_all(self, ctx):
         conn = connect()
         c = conn.cursor()
-        rows = c.execute("SELECT * FROM Shops").fetchall()
+        rows = c.execute("SELECT * FROM shops").fetchall()
         done(conn)
 
         users = len(set([row[0] for row in rows]))
@@ -441,7 +441,7 @@ class Shops(commands.Cog):
         c = conn.cursor()
 
         item = get_item(c, item)
-        rows = c.execute("SELECT discordid FROM Shops WHERE item = ?", (item,)).fetchall()
+        rows = c.execute("SELECT discordid FROM shops WHERE item = ?", (item,)).fetchall()
         if len(rows) == 0:
             requesters = []
         else:
@@ -467,12 +467,12 @@ class Shops(commands.Cog):
         conn = connect()
         c = conn.cursor()
 
-        rows = c.execute("SELECT * FROM Shops WHERE item = ?", (item,)).fetchall()
+        rows = c.execute("SELECT * FROM shops WHERE item = ?", (item,)).fetchall()
         ids = []
         if len(rows) > 0:
-            c.execute("DELETE FROM Shops WHERE item = ?", (item,))
+            c.execute("DELETE FROM shops WHERE item = ?", (item,))
             for discordid, item_ in rows:
-                c.execute("INSERT INTO Shops VALUES (?,?)", (discordid, new_name))
+                c.execute("INSERT INTO shops VALUES (?,?)", (discordid, new_name))
                 ids.append(discordid)
         done(conn)
 

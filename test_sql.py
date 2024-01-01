@@ -15,7 +15,7 @@ c = conn.cursor()
 # c.execute('''CREATE TABLE item_value
 # 	(item text, value integer) ''')
 
-# c.execute('ALTER TABLE whiskers RENAME TO Shops;')
+# c.execute('ALTER TABLE whiskers RENAME TO shops;')
 # c.execute('ALTER TABLE whiskers_stock RENAME TO shops_stock;')
 
 ###### handle ios apostrophe

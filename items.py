@@ -153,8 +153,6 @@ class Items(commands.Cog):
                 f'{title(item)} ({qty})' for item, qty in item_quantities.items() if item not in valueless_items)
         await ctx.send(out)
 
-    # -----------------------------------------
-
     @commands.command(aliases=['listalias', 'aliaslist', 'aliases'])
     async def list_alias(self, ctx):
         conn = connect()
@@ -213,13 +211,9 @@ class Items(commands.Cog):
         done(conn)
 
 
-# -----------------------------------------
-
 async def setup(bot):
     await bot.add_cog(Items(bot))
 
-
-# -----------------------------------------
 
 def title(i):
     return string.capwords(i)

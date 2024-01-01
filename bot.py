@@ -27,6 +27,12 @@ with open('settings.json', 'r') as f:
 
 
 @bot.event
+async def setup_hook():
+    for extension in initial_extensions:
+        await bot.load_extension(extension)
+
+
+@bot.event
 async def on_ready():
     logger.info(f'Logged in as {bot.user.name}; ID {bot.user.id}')
 
@@ -91,15 +97,14 @@ async def color(ctx):
 def load_initial_extensions():
     for extension in initial_extensions:
         try:
-            bot.load_extension(extension)
-            logger.info(f"Loaded {extension}")
+            # await bot.load_extension(extension)
+            logger.warning(f"Loaded {extension}")
         except Exception as e:
             exc = '{}: {}'.format(type(e).__name__, e)
             logger.warning('Failed to load extension {}\n{}'.format(extension, exc))
 
 
 if __name__ == "__main__":
-    load_initial_extensions()
 
     with open('token.txt', 'r') as f:
         token = f.read()

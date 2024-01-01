@@ -13,7 +13,9 @@ logger.addHandler(handler)
 prefix = '!'
 
 intents = discord.Intents.all()
-bot = commands.Bot(command_prefix=prefix, intents=intents)
+activity = discord.Game(name="Pixel Cat's End")
+
+bot = commands.Bot(command_prefix=prefix, intents=intents, activity=activity)
 
 mods = ['shops', 'items', 'cats', 'catsiteutil', 'shortcuts']  # modules
 initial_extensions = mods

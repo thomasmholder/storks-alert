@@ -45,7 +45,7 @@ class Cats(commands.Cog):
 
 
 async def setup(bot):
-    logger.info("Loaded Cats.py")
+    logger.info("Loaded cats.py")
     await bot.add_cog(Cats(bot))
 
 

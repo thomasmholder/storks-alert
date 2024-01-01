@@ -76,7 +76,7 @@ class Shortcuts(commands.Cog):
             if content:
                 await ctx.send(', '.join([x for x in content]))
             else:
-                await ctx.send('There are no Shortcuts.')
+                await ctx.send('There are no shortcuts.')
 
 
 async def setup(bot):
